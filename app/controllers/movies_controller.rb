@@ -15,9 +15,13 @@ class MoviesController < ApplicationController
   end
 
   def create
-    @movie = Movie.create!(params[:movie])
-    flash[:notice] = "#{@movie.title} was successfully created."
-    redirect_to movies_path
+    @movie = Movie.new(params[:movie])
+    if @movie.save
+      flash[:notice] = "#{@movie.title} was successfully created."
+      redirect_to movies_path
+    else
+      render 'new' #note, 'new' template can access @movie's field values!
+    end
   end
 
   def edit
@@ -28,7 +32,14 @@ class MoviesController < ApplicationController
     @movie = Movie.find params[:id]
     @movie.update_attributes!(params[:movie])
     flash[:notice] = "#{@movie.title} was successfully updated."
-    redirect_to movie_path(@movie)
+    respond_to do |client_wants|
+      client_wants.html {
+        redirect_to movie_path(@movie)
+      }
+      client_wants.xml {
+        render :xml => @movie.to_xml
+      }
+    end
   end
 
   def destroy
@@ -38,4 +49,7 @@ class MoviesController < ApplicationController
     redirect_to movies_path
   end
 
+  def search_tmdb
+    @movies = Movie.find_in_tmdb(params[:search_terms])
+  end
 end
